@@ -184,12 +184,12 @@ class ToggleSwitch:
     def __init__(self, x, y, label_left='Pen', label_right='Eraser'):
         self.x = x
         self.y = y
-        self.w = 52        # track width
-        self.h = 26        # track height
+        self.w = 52
+        self.h = 26
         self.label_left  = label_left
         self.label_right = label_right
-        self.is_right = False   # False = left (Pen), True = right (Eraser)
-        self.knob_anim = 0.0    # 0.0 = left, 1.0 = right
+        self.is_right = False
+        self.knob_anim = 0.0
 
     @property
     def rect(self):
@@ -207,11 +207,9 @@ class ToggleSwitch:
         self.knob_anim += (target - self.knob_anim) * min(1.0, dt * 14)
 
     def draw(self, surf, font_sm):
-        # track
         track_color = lerp_color((50, 130, 220), (200, 80, 80), self.knob_anim)
         rounded_rect(surf, track_color, self.rect, self.h // 2)
 
-        # knob
         pad = 3
         knob_r = self.h // 2 - pad
         knob_x_left  = self.x + pad + knob_r
@@ -220,7 +218,6 @@ class ToggleSwitch:
         ky = self.y + self.h // 2
         pygame.draw.circle(surf, WHITE, (kx, ky), knob_r)
 
-        # labels
         lbl_pen = font_sm.render(self.label_left, True,
                                  TEXT_PRI if not self.is_right else TEXT_DIM)
         lbl_era = font_sm.render(self.label_right, True,
@@ -276,19 +273,18 @@ def main():
     BTN_W, BTN_H = 170, 44
 
     bx = RIGHT_X + (RIGHT_PANEL_W - BTN_W) // 2
-    btn_start = Button(bx, cy + 56,  BTN_W, BTN_H, '▶  START',  (50, 130, 220))
-    btn_stop  = Button(bx, cy + 112, BTN_W, BTN_H, '■  STOP',   (55, 58, 80))
-    btn_clear = Button(bx, cy + 172, BTN_W, BTN_H, '✕  CLEAR',  (190, 55, 75))
+    btn_start = Button(bx, cy + 56,  BTN_W, BTN_H, 'START',  (50, 130, 220))
+    btn_stop  = Button(bx, cy + 112, BTN_W, BTN_H, 'STOP',   (55, 58, 80))
+    btn_clear = Button(bx, cy + 172, BTN_W, BTN_H, 'CLEAR',  (190, 55, 75))
 
-    # Settings box — taller now to fit both sliders + toggle
+    # Settings box
     SETTINGS_H = 190
     set_y = SH - SETTINGS_H - 16
 
-    brush_slider  = Slider(RIGHT_X + 20, set_y + 62,  RIGHT_PANEL_W - 40, 1, 20, 1,  'Brush Size')
+    brush_slider  = Slider(RIGHT_X + 20, set_y + 62,  RIGHT_PANEL_W - 40, 1, 20, 1, 'Brush Size')
     eraser_slider = Slider(RIGHT_X + 20, set_y + 122, RIGHT_PANEL_W - 40, 1, 40, 1, 'Eraser Size')
 
-    # Toggle switch centred inside the settings panel
-    toggle_x = RIGHT_X + RIGHT_PANEL_W // 2 - 26   # 26 = half of switch width (52)
+    toggle_x = RIGHT_X + RIGHT_PANEL_W // 2 - 26
     toggle_y = set_y + 158
     tool_toggle = ToggleSwitch(toggle_x, toggle_y)
 
@@ -334,7 +330,6 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_ESCAPE, pygame.K_q):
                     pygame.quit(); sys.exit()
-                # E key shortcut to toggle eraser/pen
                 if event.key == pygame.K_e:
                     tool_toggle.is_right = not tool_toggle.is_right
 
@@ -352,7 +347,6 @@ def main():
                 confidence_val   = 0.0
                 pred_anim = 1.0
 
-            # Canvas draw / erase
             c_rect = pygame.Rect(cx, cy, CANVAS_DISPLAY, CANVAS_DISPLAY)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if c_rect.collidepoint(event.pos):
@@ -365,14 +359,12 @@ def main():
                     prediction_label, confidence_val = predict_canvas(canvas_np)
                     pred_anim = 0.0
 
-            # Panel toggle tab
             tab_rect = pygame.Rect(lpx + LEFT_PANEL_W - 28, SH // 2 - 55, 28, 110)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if tab_rect.collidepoint(event.pos):
                     panel_open = not panel_open
                     left_panel_target = float(OPEN_X if panel_open else CLOSED_X)
 
-            # Scroll inside panel
             if event.type == pygame.MOUSEWHEEL:
                 if pygame.Rect(lpx, LIST_TOP, LEFT_PANEL_W - 28, list_h).collidepoint(mouse):
                     scroll_offset = max(0, min(MAX_SCROLL, scroll_offset - event.y * 28))
@@ -480,7 +472,7 @@ def main():
         rh = font_title.render('Controls', True, TEXT_PRI)
         screen.blit(rh, (RIGHT_X + RIGHT_PANEL_W // 2 - rh.get_width() // 2, cy - 6))
 
-        sc = font_sm.render(f'● {"PREDICTING" if running else "IDLE"}', True, GREEN if running else TEXT_DIM)
+        sc = font_sm.render('* PREDICTING' if running else '* IDLE', True, GREEN if running else TEXT_DIM)
         screen.blit(sc, (RIGHT_X + RIGHT_PANEL_W // 2 - sc.get_width() // 2, cy + 28))
 
         btn_start.draw(screen, font_body)
@@ -538,7 +530,7 @@ def main():
         tab_r = pygame.Rect(lpx + LEFT_PANEL_W - 28, SH // 2 - 55, 28, 110)
         rounded_rect(screen, (28, 30, 44), tab_r, 8)
         pygame.draw.rect(screen, PANEL_BORDER, tab_r, 1, border_radius=8)
-        arr = font_sm.render('◀' if panel_open else '▶', True, ACCENT)
+        arr = font_sm.render('<' if panel_open else '>', True, ACCENT)
         screen.blit(arr, (tab_r.x + tab_r.w // 2 - arr.get_width() // 2,
                           tab_r.y + tab_r.h // 2 - arr.get_height() // 2))
 
@@ -561,7 +553,7 @@ def main():
         tb = pygame.Surface((SW, 38), pygame.SRCALPHA)
         tb.fill((13, 13, 20, 220))
         screen.blit(tb, (0, 0))
-        tt = font_title.render('✏  Akina-Draw', True, TEXT_PRI)
+        tt = font_title.render('Akina-Draw', True, TEXT_PRI)
         screen.blit(tt, (SW // 2 - tt.get_width() // 2, 9))
         ht = font_sm.render('ESC / Q  quit   |   E  toggle eraser', True, TEXT_DIM)
         screen.blit(ht, (SW - ht.get_width() - 14, 12))

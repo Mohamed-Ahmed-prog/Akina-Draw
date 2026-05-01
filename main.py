@@ -267,6 +267,10 @@ def main():
 
     canvas_np = np.ones((CANVAS_LOGICAL, CANVAS_LOGICAL, 3), dtype=np.uint8) * 255
 
+    # Undo / redo history — each entry is a full canvas snapshot
+    undo_stack = [canvas_np.copy()]   # current state always at the top
+    redo_stack = []
+
     # Right panel
     RIGHT_PANEL_W = 220
     RIGHT_X = SW - RIGHT_PANEL_W - 24
@@ -330,8 +334,25 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_ESCAPE, pygame.K_q):
                     pygame.quit(); sys.exit()
+                # E — toggle pen / eraser
                 if event.key == pygame.K_e:
                     tool_toggle.is_right = not tool_toggle.is_right
+                # Ctrl+Z — undo
+                if event.key == pygame.K_z and (event.mod & pygame.KMOD_CTRL) and not (event.mod & pygame.KMOD_SHIFT):
+                    if len(undo_stack) > 1:
+                        redo_stack.append(undo_stack.pop())
+                        canvas_np = undo_stack[-1].copy()
+                        if running:
+                            prediction_label, confidence_val = predict_canvas(canvas_np)
+                            pred_anim = 0.0
+                # Ctrl+Shift+Z — redo
+                if event.key == pygame.K_z and (event.mod & pygame.KMOD_CTRL) and (event.mod & pygame.KMOD_SHIFT):
+                    if redo_stack:
+                        canvas_np = redo_stack.pop()
+                        undo_stack.append(canvas_np.copy())
+                        if running:
+                            prediction_label, confidence_val = predict_canvas(canvas_np)
+                            pred_anim = 0.0
 
             brush_slider.handle_event(event)
             eraser_slider.handle_event(event)
@@ -342,6 +363,8 @@ def main():
             if btn_stop.handle_event(event):
                 running = False
             if btn_clear.handle_event(event):
+                undo_stack.append(canvas_np.copy())
+                redo_stack.clear()
                 canvas_np[:] = 255
                 prediction_label = 'Draw something!'
                 confidence_val   = 0.0
@@ -352,6 +375,9 @@ def main():
                 if c_rect.collidepoint(event.pos):
                     drawing = True
                     last_lp = screen_to_canvas(event.pos[0], event.pos[1], cx, cy, CANVAS_DISPLAY, CANVAS_LOGICAL)
+                    # Save snapshot before stroke begins — clears redo history
+                    undo_stack.append(canvas_np.copy())
+                    redo_stack.clear()
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 drawing = False
                 last_lp = None

@@ -38,13 +38,16 @@ def preprocess_canvas_np(canvas_np):
     return img_input
 
 
+def canvas_is_empty(canvas_np):
+    return np.all(canvas_np == 255)
+
 def predict_canvas(canvas_np):
+    if canvas_is_empty(canvas_np):
+        return 'None', 0.0
     img_input = preprocess_canvas_np(canvas_np)
     prediction = cnn_model.predict(img_input, verbose=0)
     confidence = float(prediction[0].max())
     class_idx = int(np.argmax(prediction[0]))
-    if class_names[class_idx] == 'fish' and confidence < 0.15:
-        return 'NONE', confidence
     return class_names[class_idx], confidence
 
 #palette
